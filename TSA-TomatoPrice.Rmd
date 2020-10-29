@@ -1,0 +1,92 @@
+---
+title: "Analisis de Series de Tiempo de Precio del Tomate"
+output:
+  html_document:
+    df_print: paged
+---
+Se realiza el analisis de serie de tiempo del precio del tomate del 2012 al 2019
+
+```{r}
+#Libraries
+library('ggplot2')
+library('ggfortify')
+library('forecast')
+library('tseries')
+```
+
+Se carga el archivo de los datos.
+
+```{r}
+# load data
+datos = read.csv('tomato_price.csv', header=TRUE)
+head(datos)
+```
+
+Tranformacion de los datos a tipo TimeSerie
+
+```{r}
+# data Transform to TimeSeries (January, 1 2016 to June, 1 2020)
+myts <- ts(datos$rate, start=c(2012, 1), end=c(2020, 6), frequency=12, class="ts", name = "Tomato Rate")
+
+```
+
+Grafica de la serie de tiempo
+
+```{r}
+# Chart Time Series
+autoplot(myts, ts.colour = '#85c1e9', ts.linetype = 'dashed')+theme_light()
+
+```
+
+Test de Normalidad
+
+```{r}
+# Test de Normalidad: Histogram, Kolmorov-Smirnov, Shapiro
+ggplot(data=datos, aes(datos$rate)) + geom_histogram(color="white", fill="#85c1e9")+theme_light()
+ks.test(datos$rate, "pnorm", mean=mean(datos$rate), sd=sd(datos$rate))
+shapiro.test(datos$rate)
+
+```
+
+#### Descomposicion de la Serie
+
+Se realiza una descomposicion de la serie de tiempo, por medio de un correlacion
+
+```{r}
+# Serie Estacionaria
+# Metodo 1
+autoplot(acf(myts, plot = FALSE))+theme_light()
+```
+
+Desestacionalidad de la serie
+
+```{r}
+autoplot(stl(myts, s.window = "periodic"), ts.colour = "#1f618d")
+```
+Confirmamos la estacionalidad con el Test de Dickey-Fuller
+```{r}
+# Test Dickey-Fuller
+adf.test(datos$rate, alternative = "stationary")
+```
+#### ARIMA
+
+Determinar el grado que se utilizara de ARIMA
+
+Por medio de una analisis de correlaciones Totales
+```{r}
+# Determinar el grado de arima
+autoplot(acf(myts, plot = FALSE))+theme_light()
+```
+
+Adicional, un analisis de correlaciones Parciales
+
+```{r}
+autoplot(pacf(myts, plot = FALSE))+theme_light()
+```
+#### Modelado de la Serie
+
+```{r}
+ndiffs(datos)
+```
+
+
